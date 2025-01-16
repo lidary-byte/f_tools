@@ -22,6 +22,9 @@ class HomeController extends GetxController {
   List<AppInfoModel> filteredApps = [];
   int selectedIndex = 0;
 
+// 上次按键记录
+  DateTime? _lastKeyEventTime;
+
   @override
   void onInit() {
     super.onInit();
@@ -39,22 +42,38 @@ class HomeController extends GetxController {
   }
 
   void handleKeyEvent(KeyEvent event) {
+    // 防抖处理 同一个键位按下后会执行两次(不确定是不是flutter的bug)
+    final now = DateTime.now();
+    if (_lastKeyEventTime != null) {
+      final difference = now.difference(_lastKeyEventTime!);
+      if (difference < _keyEventThreshold) {
+        return;
+      }
+    }
+    _lastKeyEventTime = now;
     if (event.logicalKey == LogicalKeyboardKey.escape) {
       // ESC 键清空搜索
       clearSearch();
-    } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+      return;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown &&
+        event.logicalKey.keyLabel == 'Arrow Down') {
       // 向下键选择下一个
       if (selectedIndex < filteredApps.length - 1) {
         selectedIndex++;
         update();
       }
-    } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      return;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
       // 向上键选择上一个
       if (selectedIndex > 0) {
         selectedIndex--;
         update();
       }
-    } else if (event.logicalKey == LogicalKeyboardKey.enter) {
+      return;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.enter) {
       // 回车键打开选中的应用
       if (filteredApps.isNotEmpty) {
         openApp(filteredApps[selectedIndex]);
@@ -100,4 +119,6 @@ class HomeController extends GetxController {
       logger.e('打开应用失败: $e');
     }
   }
+
+  static const _keyEventThreshold = Duration(milliseconds: 100);
 }
