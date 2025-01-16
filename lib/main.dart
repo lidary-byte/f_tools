@@ -1,9 +1,25 @@
+/*
+ * @Description: 
+ * @Author: lidary-byte lidaryl@163.com
+ * @Date: 2025-01-15 16:06:13
+ * @LastEditors: lidary-byte lidaryl@163.com
+ * @LastEditTime: 2025-01-16 17:07:31
+ */
+import 'package:f_tools/routes/app_routes.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'controllers/search_controller.dart' as search_controller;
+import 'package:get/route_manager.dart';
+import 'package:logger/logger.dart';
+import 'package:window_manager/window_manager.dart';
 
-void main() {
-  runApp(const MyApp());
+final logger = Logger();
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initWindow();
+
+  runApp(
+    const MyApp(),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -12,7 +28,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Flutter Launcher',
+      title: 'FTools',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -21,101 +37,37 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const SearchPage(),
+      getPages: AppRoutes.routes,
+      initialRoute: AppRoutePath.home,
     );
   }
 }
 
-class SearchPage extends StatefulWidget {
-  const SearchPage({super.key});
+Future initWindow() async {
+  // 初始化窗口管理器
+  await windowManager.ensureInitialized();
 
-  @override
-  State<SearchPage> createState() => _SearchPageState();
-}
+  // 配置窗口属性
+  WindowOptions windowOptions = const WindowOptions(
+    size: Size(600, 400),
+    center: true,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    backgroundColor: Colors.black,
+    titleBarStyle: TitleBarStyle.hidden,
+    windowButtonVisibility: false,
+  );
 
-class _SearchPageState extends State<SearchPage> {
-  final search_controller.SearchController searchController =
-      Get.put(search_controller.SearchController());
-  final TextEditingController _textController = TextEditingController();
-  final FocusNode _focusNode = FocusNode();
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode.requestFocus();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[900],
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: TextField(
-                controller: _textController,
-                focusNode: _focusNode,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                ),
-                decoration: InputDecoration(
-                  hintText: '搜索...',
-                  hintStyle: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 20,
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: Colors.grey[400],
-                    size: 24,
-                  ),
-                  border: InputBorder.none,
-                ),
-                onChanged: (value) => searchController.updateSearch(value),
-              ),
-            ),
-            Divider(
-              color: Colors.grey[800],
-              height: 1,
-            ),
-            Expanded(
-              child: Obx(
-                () => ListView.builder(
-                  itemCount: searchController.searchResults.length,
-                  itemBuilder: (context, index) {
-                    final result = searchController.searchResults[index];
-                    return ListTile(
-                      title: Text(
-                        result,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
-                      ),
-                      onTap: () {
-                        // TODO: 处理结果点击
-                      },
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _textController.dispose();
-    _focusNode.dispose();
-    super.dispose();
-  }
+  // await windowManager.setResizable(false);
+  // await windowManager.setMaximizable(false);
+  // await windowManager.setMinimizable(false);
+  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    // await Window.setEffect(effect: WindowEffect.acrylic);
+    await windowManager.setHasShadow(true);
+    await windowManager.setOpacity(0.8);
+  });
+  // , () async {
+  //   await windowManager.show();
+  //   await windowManager.focus();
+  // }
 }
